@@ -18,13 +18,15 @@ export async function GET(request: NextRequest): Promise<Response> {
 export async function POST(request: NextRequest): Promise<Response> {
     try {
         const body = await request.json();
-        console.log('Received webhook body:', JSON.stringify(body, null, 2));
         const messagesFB: FacebookMessageObject[] = FacebookMessageParser.parsePayload(body);
-        const messageHandler = new MessageHandler(console.log);
+        const messageHandler = new MessageHandler('FACEBOOK_PAGE', console.log);
 
         for (const message of messagesFB) {
-            //we have to await here!!
-            await messageHandler.handle(message);
+            // We don't await here to allow the webhook to respond quickly.
+            // The actual processing happens in the background.
+            messageHandler.handleIncomingMessage(message).catch(error => {
+                console.error('Error processing message:', error);
+            });
         }
 
         return new Response('EVENT_RECEIVED', { status: 200 });

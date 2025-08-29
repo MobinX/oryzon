@@ -125,6 +125,21 @@ export class MessagesService {
     const result = await db.delete(messages).where(inArray(messages.messageId, filter.ids as string[]));
     return { count: result.rowCount ?? 0 };
   }
+
+  async getPendingMessages(chatId: string): Promise<Message[]> {
+    return db.query.messages.findMany({
+      where: and(
+        eq(messages.chatId, chatId),
+        eq(messages.status, 'PENDING')
+      ),
+      orderBy: [asc(messages.timestamp)],
+    });
+  }
+
+  async updateMessageStatus(messageIds: string[], status: (typeof messages.status.enumValues)[number]): Promise<void> {
+    if (messageIds.length === 0) return;
+    await db.update(messages).set({ status }).where(inArray(messages.messageId, messageIds));
+  }
 }
 
 export const messagesService = new MessagesService();

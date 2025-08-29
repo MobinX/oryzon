@@ -17,10 +17,11 @@ import { relations } from 'drizzle-orm';
 export const loginProviderEnum = pgEnum('login_provider', ['EMAIL', 'GOOGLE', 'FACEBOOK', 'LINKEDIN', 'TWITTER', 'INSTAGRAM']);
 export const platformTypeEnum = pgEnum('platform_type', ['FACEBOOK_PAGE', 'INSTAGRAM_BUSINESS', 'LINKEDIN_PAGE', 'TWITTER_PROFILE']);
 export const orderStatusEnum = pgEnum('order_status', ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'CANCELLED']);
-export const chatStatusEnum = pgEnum('chat_status', ['OPEN', 'CLOSED_BY_BOT', 'CLOSED_BY_AGENT', 'ARCHIVED']);
+export const chatStatusEnum = pgEnum('chat_status', ['OPEN', 'PROCESSING', 'CLOSED_BY_BOT', 'CLOSED_BY_AGENT', 'ARCHIVED']);
 export const messageSenderTypeEnum = pgEnum('message_sender_type', ['BOT', 'CUSTOMER', 'AGENT']);
 export const messageContentTypeEnum = pgEnum('message_content_type', ['TEXT', 'IMAGE', 'AUDIO',]);
 export const chatTypeEnum = pgEnum('chat_type', ['real', 'test']);
+export const messageStatusEnum = pgEnum('message_status', ['PENDING', 'PROCESSING', 'PROCESSED', 'FAILED']);
 // Tables
 export const users = pgTable('users', {
   userId: uuid('user_id').primaryKey().defaultRandom(), // Primary internal ID
@@ -141,6 +142,7 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
   platformMessageId: text('platform_message_id'),
+  status: messageStatusEnum('status').default('PENDING').notNull(),
   totalTimeTaken: decimal("total_time_taken", { precision: 10, scale: 2 }).default("0"),
   cost: decimal("cost", { precision: 10, scale: 2 }).default("0"),
 });

@@ -143,6 +143,10 @@ export class ChatsService {
     return updatedChat || null;
   }
 
+  async updateChatStatus(chatId: string, status: (typeof chats.status.enumValues)[number]): Promise<void> {
+    await db.update(chats).set({ status }).where(eq(chats.chatId, chatId));
+  }
+
   async updateManyChats(filter: ChatFilterOptions, data: UpdateManyChatsData): Promise<{ count: number }> {
     if (!filter.ids || filter.ids.length === 0) {
       return { count: 0 };
