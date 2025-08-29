@@ -21,15 +21,16 @@ export interface GenericMessage {
     };
 }
 
+import { FacebookClient } from './clients/FacebookClient';
+
 export class MessageHandler {
-    private client: IMessagingClient;
+    private client: IMessagingClient | null = null;
     private channel: ConnectedChannelWithIncludes | null = null;
     private customer: Customer | null = null;
     private chat: Chat | null = null;
     private log: (message: string, ...args: unknown[]) => void;
 
-    constructor(client: IMessagingClient, log: (message: string, ...args: unknown[]) => void = console.log) {
-        this.client = client;
+    constructor(log: (message: string, ...args: unknown[]) => void = console.log) {
         this.log = log;
     }
 
@@ -41,7 +42,7 @@ export class MessageHandler {
         this.log(`Processing message for recipient: ${message.recipient.id} from sender: ${message.sender.id}`);
         await this.initialize(message.recipient.id, message.sender.id);
 
-        if (!this.channel || !this.customer || !this.chat) {
+        if (!this.channel || !this.customer || !this.chat || !this.client) {
             this.log('Initialization failed, aborting message handling.');
             return;
         }
@@ -79,12 +80,13 @@ export class MessageHandler {
             limit: 1,
         });
         this.channel = data[0];
-        if (this.channel) {
+        if (this.channel && this.channel.accessToken) {
             this.log(`Found channel: ${this.channel.channelId}`);
+            this.client = new FacebookClient(this.channel.accessToken);
             this.customer = this.channel.customers?.[0] || null;
             this.chat = this.channel.chats?.[0] || null;
         } else {
-            this.log(`Channel not found for recipient: ${recipientPageId}`);
+            this.log(`Channel not found or access token is missing for recipient: ${recipientPageId}`);
         }
     }
 
@@ -127,10 +129,10 @@ export class MessageHandler {
                 contentType: 'IMAGE',
             };
             const lastMsgs = await chatsService.handleNewMessage(messageContent, this.chat!.chatId);
-            await this.client.sendTextMessage(message.sender.id, `Please wait a moment while processing the image. This may take a minute...`);
+            await this.client!.sendTextMessage(message.sender.id, `Please wait a moment while processing the image. This may take a minute...`);
             await this.executeAI(lastMsgs, message.sender.id);
         } else {
-            await this.client.sendTextMessage(message.sender.id, `Can not process ${attachment?.type} attachments yet.`);
+            await this.client!.sendTextMessage(message.sender.id, `Can not process ${attachment?.type} attachments yet.`);
         }
     }
 
@@ -143,8 +145,8 @@ export class MessageHandler {
             contentType: 'TEXT',
             platformMessageId: platformMessageId,
         };
-        await this.client.markSeen(message.sender.id);
-        await this.client.toggleTyping(message.sender.id, true);
+        await this.client!.markSeen(message.sender.id);
+        await this.client!.toggleTyping(message.sender.id, true);
         const lastMsgs = await chatsService.handleNewMessage(messageContent, this.chat!.chatId);
         await this.executeAI(lastMsgs, message.sender.id);
     }
@@ -158,8 +160,8 @@ export class MessageHandler {
 
         const replyUserFn = async (msg: unknown) => {
             const content = typeof msg === 'string' ? msg : JSON.stringify(msg);
-            await this.client.sendTextMessage(messageSenderPsid, content);
-            await this.client.toggleTyping(messageSenderPsid, false);
+            await this.client!.sendTextMessage(messageSenderPsid, content);
+            await this.client!.toggleTyping(messageSenderPsid, false);
             await chatsService.handleNewMessage(
                 { content, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined },
                 this.chat!.chatId,
@@ -167,9 +169,9 @@ export class MessageHandler {
         };
 
         const replyUserWithProductImageAndInfoFn = async (productImageURL: string, productInfo: string) => {
-            await this.client.sendImageMessage(messageSenderPsid, productImageURL);
-            await this.client.sendTextMessage(messageSenderPsid, productInfo);
-            await this.client.toggleTyping(messageSenderPsid, false);
+            await this.client!.sendImageMessage(messageSenderPsid, productImageURL);
+            await this.client!.sendTextMessage(messageSenderPsid, productInfo);
+            await this.client!.toggleTyping(messageSenderPsid, false);
             await chatsService.handleNewMessage(
                 { content: productInfo, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined },
                 this.chat!.chatId,

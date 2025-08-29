@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FacebookMessageParser, FacebookMessagePayloadMessagingEntry as FacebookMessageObject } from 'fb-messenger-bot-api';
 import { MessageHandler } from '@/backend/services/messaging/MessageHandler';
-import { FacebookClient } from '@/backend/services/messaging/clients/FacebookClient';
 
 export async function GET(request: NextRequest): Promise<Response> {
     const { searchParams } = new URL(request.url);
@@ -16,18 +15,12 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 }
 
-const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN as string;
-
 export async function POST(request: NextRequest): Promise<Response> {
     try {
         const body = await request.json();
         console.log('Received webhook body:', JSON.stringify(body, null, 2));
         const messagesFB: FacebookMessageObject[] = FacebookMessageParser.parsePayload(body);
-
-        // In a real-world scenario, you would dynamically fetch the correct
-        // access token based on the recipient page ID. For now, we'll use the one from env.
-        const client = new FacebookClient(PAGE_ACCESS_TOKEN);
-        const messageHandler = new MessageHandler(client, console.log);
+        const messageHandler = new MessageHandler(console.log);
 
         for (const message of messagesFB) {
             // We don't await here to allow the webhook to respond quickly.
