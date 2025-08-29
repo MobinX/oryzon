@@ -38,7 +38,7 @@ export class ChatsService {
         business: options?.include?.business ? true : undefined, // Added business
         userViaProviderId: options?.include?.userViaProviderId ? true : undefined, // Added userViaProviderId
         customer: options?.include?.customer ? true : undefined,
-        connectedChannel: options?.include?.connectedChannel ? true : undefined,
+        connectedChannel: options?.include?.connectedChannel ? { with: { business: true } } : undefined,
         messages: options?.include?.messages 
           ? { 
               limit: typeof options.include.messages === 'boolean' ? undefined : options.include.messages.limit,
@@ -108,7 +108,7 @@ export class ChatsService {
         business: options?.include?.business ? true : undefined, // Added business
         userViaProviderId: options?.include?.userViaProviderId ? true : undefined, // Added userViaProviderId
         customer: options?.include?.customer ? true : undefined,
-        connectedChannel: options?.include?.connectedChannel ? true : undefined,
+        connectedChannel: options?.include?.connectedChannel ? { with: { business: true } } : undefined,
         messages: options?.include?.messages 
           ? { 
               limit: typeof options.include.messages === 'boolean' ? undefined : options.include.messages.limit,

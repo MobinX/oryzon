@@ -22,11 +22,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         const messageHandler = new MessageHandler('FACEBOOK_PAGE', console.log);
 
         for (const message of messagesFB) {
-            // We don't await here to allow the webhook to respond quickly.
-            // The actual processing happens in the background.
-            messageHandler.handleIncomingMessage(message).catch(error => {
-                console.error('Error processing message:', error);
-            });
+           await messageHandler.handleIncomingMessage(message);
         }
 
         return new Response('EVENT_RECEIVED', { status: 200 });

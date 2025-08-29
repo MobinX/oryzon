@@ -52,14 +52,22 @@ export class MessageHandler {
             this.chat.chatId,
         );
 
-        if (this.chat.status === 'OPEN') {
+        if (this.chat.status !== 'PROCESSING') {
             await chatsService.updateChatStatus(this.chat.chatId, 'PROCESSING');
-            // Asynchronously trigger the queue processing
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/webhooks/facebook/process-queue`, {
+        }
+
+        this.log(`Triggering queue processing for chat: ${this.chat.chatId}`);
+        try {
+            // Use fetch to trigger the queue processing asynchronously in a new serverless invocation
+            fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/facebook/process-queue`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chatId: this.chat.chatId }),
             });
+        } catch (error) {
+            this.log(`Failed to trigger queue processing for chat ${this.chat.chatId}:`, error);
+            // Optionally, reset status to allow for another attempt on the next message
+            await chatsService.updateChatStatus(this.chat.chatId, 'OPEN');
         }
     }
 
@@ -99,7 +107,10 @@ export class MessageHandler {
             );
         } finally {
             // Check for any new messages that arrived during processing
+        	
+        	await new Promise(resolve => setTimeout(resolve, 2000));
             const newPendingMessages = await messagesService.getPendingMessages(chatId);
+            this.log(JSON.stringify(newPendingMessages))
             if (newPendingMessages.length > 0) {
                 this.log(`New messages arrived for chat: ${chatId}. Re-running queue.`);
                 await this._processQueue(chatId);
@@ -225,7 +236,7 @@ export class MessageHandler {
             await this.client!.sendTextMessage(messageSenderPsid, content);
             await this.client!.toggleTyping(messageSenderPsid, false);
             await chatsService.handleNewMessage(
-                { content, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined },
+                { content, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined,status:"PROCESSED" },
                 this.chat!.chatId,
             );
         };
@@ -235,7 +246,7 @@ export class MessageHandler {
             await this.client!.sendTextMessage(messageSenderPsid, productInfo);
             await this.client!.toggleTyping(messageSenderPsid, false);
             await chatsService.handleNewMessage(
-                { content: productInfo, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined },
+                { content: productInfo, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined, status:"PROCESSED" },
                 this.chat!.chatId,
             );
         };
