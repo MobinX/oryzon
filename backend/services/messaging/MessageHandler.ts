@@ -111,6 +111,7 @@ export class MessageHandler {
                 pendingMessages.map(m => m.message_id),
                 'FAILED'
             );
+            await this.client.sendTextMessage(this.customer.platformCustomerId, "Sorry, something went wrong while processing your message. Please try again later.");
         } finally {
             // Check for any new messages that arrived during processing
         	
