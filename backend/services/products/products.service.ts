@@ -455,6 +455,7 @@ export class ProductsService {
         });
       }
     }
+    productsWithSimilarities.sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
     console.log(productsWithSimilarities);
     return productsWithSimilarities.length > 0 ? productsWithSimilarities : null;
 
