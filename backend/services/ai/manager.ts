@@ -7,7 +7,8 @@ import { ChatGoogle } from "@langchain/google-gauth";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, AIMessage, ToolMessage, SystemMessage } from '@langchain/core/messages';
 
-export const executeAgent = async (msgs: typeof messages.$inferSelect[], customerId: string, connectedPageID: string, businessDescription: string | null, businessId: string, address: string, customerInfo: string, replyUserFn: (message: string) => Promise<void>, replyUserWithProductImageAndInfoFn: (productImageURL: string, productInfo: string) => Promise<void>, log: (message: string) => void) => {
+
+export const executeAgent = async (msgs: (typeof messages.$inferSelect & {sender_type?: string})[] , customerId: string, connectedPageID: string, businessDescription: string | null, businessId: string, address: string, customerInfo: string, replyUserFn: (message: string) => Promise<void>, replyUserWithProductImageAndInfoFn: (productImageURL: string, productInfo: string) => Promise<void>, log: (message: string) => void) => {
 
   const messages: (HumanMessage | AIMessage | ToolMessage | SystemMessage)[] = []
   let totalOutPutToken = 0;
@@ -16,9 +17,10 @@ export const executeAgent = async (msgs: typeof messages.$inferSelect[], custome
   messages.push(new SystemMessage(systemPromptContent));
 
   for (const msg of msgs) {
-    if (msg.senderType === "CUSTOMER") {
+    console.log(msg)
+    if (msg.senderType === "CUSTOMER" || msg.sender_type === "CUSTOMER") {
       messages.push(new HumanMessage(msg.content));
-    } else if (msg.senderType === "BOT") {
+    } else if (msg.senderType === "BOT" || msg.sender_type === "BOT") {
       messages.push(new AIMessage(msg.content));
     }
   }

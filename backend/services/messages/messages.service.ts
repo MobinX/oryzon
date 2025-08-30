@@ -10,7 +10,7 @@ import {
   // UpdateManyMessagesData, // Removed as per user feedback
   MessageWithIncludes,
 } from './messages.types';
-import { and, count, eq, ilike, inArray, desc, asc, gte, lte } from 'drizzle-orm';
+import { and, count, eq, ilike, inArray, desc, asc, gte, lte, sql } from 'drizzle-orm';
 
 export class MessagesService {
   constructor() {}
@@ -126,14 +126,33 @@ export class MessagesService {
     return { count: result.rowCount ?? 0 };
   }
 
-  async getPendingMessages(chatId: string): Promise<Message[]> {
-    return db.query.messages.findMany({
-      where: and(
-        eq(messages.chatId, chatId),
-        eq(messages.status, 'PENDING')
+  async getPendingMessages(chatId: string): Promise<(Message &  {sender_type?: string, message_id: string})[] > {
+    const query = sql`
+      WITH pending_messages AS (
+        SELECT *
+        FROM ${messages}
+        WHERE ${messages.chatId} = ${chatId} AND ${messages.status} = 'PENDING'
       ),
-      orderBy: [asc(messages.timestamp)],
-    });
+      messages_before_pending AS (
+        SELECT *
+        FROM ${messages}
+        WHERE ${messages.chatId} = ${chatId} AND ${messages.timestamp} < (SELECT MIN(timestamp) FROM pending_messages)
+        ORDER BY ${messages.timestamp} DESC
+        LIMIT 20
+      )
+      SELECT * FROM messages_before_pending
+      UNION ALL
+      SELECT * FROM pending_messages
+      ORDER BY timestamp ASC;
+    `;
+
+    // Execute the raw query
+    const result = await db.execute(query);
+    console.log((result as unknown as { rows: Message[] }).rows)
+    // The query is designed to return an empty result set if no pending messages are found.
+    // The `result` from `db.execute` (with node-postgres) is an object with a `rows` property.
+    // This avoids the extra database call from the previous implementation.
+    return (result as unknown as { rows: (Message &  {sender_type?: string, message_id: string})[]  }).rows;
   }
 
   async updateMessageStatus(messageIds: string[], status: (typeof messages.status.enumValues)[number]): Promise<void> {

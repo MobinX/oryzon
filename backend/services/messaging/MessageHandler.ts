@@ -95,20 +95,20 @@ export class MessageHandler {
         }
 
         await messagesService.updateMessageStatus(
-            pendingMessages.map(m => m.messageId),
+            pendingMessages.map(m => m.message_id),
             'PROCESSING'
         );
 
         try {
             await this.executeAI(pendingMessages, this.customer.platformCustomerId);
             await messagesService.updateMessageStatus(
-                pendingMessages.map(m => m.messageId),
+                pendingMessages.map(m => m.message_id),
                 'PROCESSED'
             );
         } catch (error) {
             this.log(`Error processing messages for chat ${chatId}:`, error);
             await messagesService.updateMessageStatus(
-                pendingMessages.map(m => m.messageId),
+                pendingMessages.map(m => m.message_id),
                 'FAILED'
             );
         } finally {
@@ -239,12 +239,12 @@ export class MessageHandler {
 
         const replyUserFn = async (msg: unknown) => {
             const content = typeof msg === 'string' ? msg : JSON.stringify(msg);
-            await this.client!.sendTextMessage(messageSenderPsid, content);
-            await this.client!.toggleTyping(messageSenderPsid, false);
-            await chatsService.handleNewMessage(
+            try { await this.client!.sendTextMessage(messageSenderPsid, content); } catch (e) { this.log("Error sending message to user:", e); }
+            try {await this.client!.toggleTyping(messageSenderPsid, false);} catch (e) { this.log("Error toggling typing off:", e); }
+           try { await chatsService.handleNewMessage(
                 { content, senderType: 'BOT', contentType: 'TEXT', platformMessageId: undefined,status:"PROCESSED" },
                 this.chat!.chatId,
-            );
+            ); } catch (e) { this.log("Error logging bot message:", e); }
         };
 
         const replyUserWithProductImageAndInfoFn = async (productImageURL: string, productInfo: string) => {
