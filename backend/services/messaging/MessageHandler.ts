@@ -63,7 +63,18 @@ export class MessageHandler {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chatId: this.chat.chatId }),
-            });
+                signal: AbortSignal.timeout(20000) // 20 second timeout
+        }).catch(error => {
+            // Ignore all errors including timeouts - this is fire-and-forget
+            console.log('Background fetch completed (errors ignored)');
+                await chatsService.updateChatStatus(this.chat.chatId, 'OPEN');
+        
+        });
+
+        //wait for 2s then return response
+        await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            
         } catch (error) {
             this.log(`Failed to trigger queue processing for chat ${this.chat.chatId}:`, error);
             // Optionally, reset status to allow for another attempt on the next message
