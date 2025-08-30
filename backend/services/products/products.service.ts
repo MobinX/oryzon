@@ -430,7 +430,7 @@ export class ProductsService {
 
     // Iterate over the found documents
     for await (const document of cursor) {
-       if (document && document.$similarity &&  document.$similarity >= .80) {
+       if (document && document.$similarity &&  document.$similarity >= .85) {
          productIds.push(document._id as string);
          similarities.push(document.$similarity);
        }

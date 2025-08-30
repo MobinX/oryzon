@@ -49,7 +49,7 @@ export const executeAgent = async (msgs: (typeof messages.$inferSelect & {sender
     model: "gemini-2.5-flash-lite",
     apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     temperature: 0.2,
-    maxReasoningTokens: 512,
+    maxReasoningTokens: 768,
   });
 
   const llmWithTools = model.bindTools([

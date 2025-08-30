@@ -45,6 +45,7 @@ export function formatObjectToString(obj: unknown, title: string): string {
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       if (key == 'businessId') continue;
+      if (key == "similarity") continue;
       const value = (obj as Record<string, unknown>)[key];
       result += `  ${key == 'shortId' ? 'shortTag' : key}: ${formatValue(value).trimStart()}\n`;
     }
@@ -206,7 +207,7 @@ export const getAITools = (customerId: string, connectedPageID: string, business
 
       if (products.length > 1) {
         for (const product of products) {
-          result += formatObjectToString(product, 'Product Info') + '\n---\n';
+          result += formatObjectToString(product, 'Product Info: All products listed here , are ordered based on similarity. Please send them to customer with this order.') + '\n---\n';
         }
       } else {
         result = formatObjectToString(products[0], 'Product Info');
@@ -266,7 +267,7 @@ export const getAITools = (customerId: string, connectedPageID: string, business
       businessId,
       shippingAddress: orderParams.shippingAddress || address,
       customerContact: orderParams.customerContact, // Default to empty string if not provided
-      customerName: orderParams.customerName , // Default to empty string if not provided
+      customerName: orderParams.customerName, // Default to empty string if not provided
     };
     const newOrder = await ordersService.createOrder(orderData);
     let result = "Create Order Result: \n"
