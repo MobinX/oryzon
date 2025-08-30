@@ -64,11 +64,6 @@ export class MessageHandler {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chatId: this.chat.chatId }),
                 signal: AbortSignal.timeout(20000) // 20 second timeout
-        }).catch(error => {
-            // Ignore all errors including timeouts - this is fire-and-forget
-            console.log('Background fetch completed (errors ignored)');
-                await chatsService.updateChatStatus(this.chat.chatId, 'OPEN');
-        
         });
 
         //wait for 2s then return response
