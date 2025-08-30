@@ -136,7 +136,7 @@ export default function BusinessDetailLayoutContent({
     );
   }
 
-  const showAddProductButtonInMain = activeSectionId === 'products-overview' && pathname === `/business/${businessId}/products`;
+  const showAddProductButtonInMain = activeSectionId === 'products-overview' ;
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-on-dark-primary)]">
@@ -173,14 +173,7 @@ export default function BusinessDetailLayoutContent({
         )}
         <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ease-in-out 
                          ${businessId ? (isMobileSidebarOpen && 'md:ml-0') || (!isMobileSidebarOpen && 'md:ml-64') : 'ml-0'}`}>
-           {showAddProductButtonInMain && (
-            <div className="mb-4 flex justify-end">
-              <Link href={`/business/${businessId}/products/new`} className="bg-[var(--color-accent-primary)] text-white px-4 py-2 rounded-md hover:bg-opacity-80 transition-colors flex items-center">
-                <PlusCircle size={18} className="mr-2" />
-                Add New Product
-              </Link>
-            </div>
-          )}
+         
           {children}
         </main>
       </div>
